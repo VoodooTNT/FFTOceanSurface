@@ -9,6 +9,9 @@ This project has been changed to using compute shader.
 这个项目修改为使用计算着色器通过GPU计算。  
   
 使用原项目光照：  
+  
 ![使用原项目光照：](./Image/OriginalLighting.png)  
+  
 简单Blinn-Phong+Fresnel光照：  
+  
 ![简单Blinn-Phong+Fresnel光照：](./Image/SimpleLighting.png)  
