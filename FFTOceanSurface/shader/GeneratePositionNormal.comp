@@ -1,0 +1,44 @@
+#version 440 core
+
+const int LOCAL_WORK_GROUP_SIZE = 32;
+
+const int L = 1000;
+const int N = 512;
+const float PI = 3.141592653589;
+
+layout(binding = 0 ,rg32f) uniform image2D u_imageDx;
+layout(binding = 1 ,rg32f) uniform image2D u_imageDy;
+layout(binding = 2 ,rg32f) uniform image2D u_imageDz;
+layout(binding = 3 ,rg32f) uniform image2D u_imageNx;
+layout(binding = 4 ,rg32f) uniform image2D u_imageNz;
+layout(binding = 5 ,rgba32f) uniform image2D u_imagePosition;
+layout(binding = 6 ,rgba32f) uniform image2D u_imageNormal;
+
+layout(local_size_x = LOCAL_WORK_GROUP_SIZE, local_size_y = LOCAL_WORK_GROUP_SIZE, local_size_z = 1) in;
+
+void main()
+{
+	//通过gl_GlobalInvocationID来得知当前执行单元在全局工作组中的位置
+	ivec2 storePos = ivec2(int(gl_GlobalInvocationID.x), int(gl_GlobalInvocationID.y));
+
+	float sign = 1;
+	float lambda = 1;
+	int mod = (storePos.x + storePos.y) % 2;
+	if (mod==1) sign = -1;
+
+	//根据位置storePos在贴图中采样得到数据
+	vec2 Dx = imageLoad(u_imageDx, storePos).xy;
+	vec2 Dy = imageLoad(u_imageDy, storePos).xy;
+	vec2 Dz = imageLoad(u_imageDz, storePos).xy;
+	vec2 Nx = imageLoad(u_imageNx, storePos).xy;
+	vec2 Nz = imageLoad(u_imageNz, storePos).xy;
+
+	vec3 normal = normalize(vec3(sign*Nx.x, -1, sign*Nz.x));
+	vec3 position = vec3((storePos.x - N / 2) * L / N - sign * lambda * Dx.x, 
+										sign * Dy.x, 
+									(storePos.y - N / 2) * L / N - sign * lambda * Dz.x);
+
+	//将算出来的法线值存储到贴图当中
+	imageStore(u_imagePosition, storePos, vec4(position, 0.0));
+	imageStore(u_imageNormal, storePos, vec4(normal, 0.0));
+}
